@@ -22,6 +22,16 @@ function escapeHtml(s) {
     .replace(/'/g, "&#039;");
 }
 
+function formatDate(iso) {
+  try {
+    var d = new Date(iso);
+    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+      + " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  } catch (e) {
+    return iso;
+  }
+}
+
 function renderTable(items) {
   var tbody = $("#bugsTable tbody");
   tbody.empty();
@@ -34,20 +44,19 @@ function renderTable(items) {
   for (var i = 0; i < items.length; i++) {
     var b = items[i];
     var row = "<tr>"
-      + "<td>" + escapeHtml(b.id) + "</td>"
+      + "<td class='col-meta muted'>" + escapeHtml(b.id) + "</td>"
       + "<td>" + escapeHtml(b.bugTitle) + "</td>"
-      + "<td><span class='pill sev-" + escapeHtml(String(b.severity).toLowerCase()) + "'>"
+      + "<td class='col-meta'><span class='pill sev-" + escapeHtml(String(b.severity).toLowerCase()) + "'>"
       + escapeHtml(b.severity) + "</span></td>"
-      + "<td>" + escapeHtml(b.status) + "</td>"
-      + "<td class='muted'>" + escapeHtml(b.createdAt) + "</td>"
-      + "<td>" + escapeHtml(b.description) + "</td>"
+      + "<td class='col-meta'>" + escapeHtml(b.status) + "</td>"
+      + "<td class='col-meta muted'>" + escapeHtml(formatDate(b.createdAt)) + "</td>"
+      + "<td class='col-desc'>" + escapeHtml(b.description) + "</td>"
       + "</tr>";
     tbody.append(row);
   }
 }
 
 function loadBugs() {
-  setMessage("");
   var sev = $("#severityFilter").val();
   var url = apiUrl("/api/bugs");
   if (sev) url += "?severity=" + encodeURIComponent(sev);
@@ -64,9 +73,23 @@ function loadBugs() {
 function submitBug() {
   setMessage("");
 
+  var title = $.trim($("#bugTitle").val());
+  var description = $.trim($("#description").val());
+
+  if (!title) {
+    setMessage("Title is required.", true);
+    $("#bugTitle").focus();
+    return;
+  }
+  if (!description) {
+    setMessage("Description is required.", true);
+    $("#description").focus();
+    return;
+  }
+
   var payload = {
-    bugTitle: $("#bugTitle").val(),
-    description: $("#description").val(),
+    bugTitle: title,
+    description: description,
     severity: $("#severity").val(),
     status: $("#status").val()
   };
@@ -82,6 +105,7 @@ function submitBug() {
       $("#description").val("");
       $("#severity").val("MEDIUM");
       $("#status").val("OPEN");
+      setMessage("Bug submitted successfully.", false);
       loadBugs();
     })
     .fail(function (xhr) {
@@ -93,7 +117,10 @@ function submitBug() {
 
 $(function () {
   $("#submitBug").on("click", submitBug);
-  $("#severityFilter").on("change", loadBugs);
+  $("#severityFilter").on("change", function () {
+    setMessage("");
+    loadBugs();
+  });
   loadBugs();
 });
 

@@ -68,19 +68,21 @@
         </div>
       </div>
 
-      <table class="table" id="bugsTable">
-        <thead>
-        <tr>
-          <th>ID</th>
-          <th>Title</th>
-          <th>Severity</th>
-          <th>Status</th>
-          <th>Created</th>
-          <th>Description</th>
-        </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="tableWrapper">
+        <table class="table" id="bugsTable">
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Severity</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Description</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 

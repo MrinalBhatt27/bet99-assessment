@@ -10,8 +10,25 @@
 
   <context:component-scan base-package="com.bet99.bugtracker.controller"/>
 
+  <bean id="servletPropertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="locations">
+      <list>
+        <value>classpath:application.properties</value>
+      </list>
+    </property>
+    <property name="ignoreUnresolvablePlaceholders" value="true" />
+  </bean>
+
   <mvc:annotation-driven />
   <mvc:default-servlet-handler />
+
+  <mvc:cors>
+    <mvc:mapping path="/api/**"
+                 allowed-origins="*"
+                 allowed-methods="GET,POST"
+                 allowed-headers="Content-Type,Accept"
+                 max-age="3600"/>
+  </mvc:cors>
 
   <mvc:resources mapping="/assets/**" location="/assets/" />
 
