@@ -228,8 +228,24 @@ button {
     gap: 6px;
   }
 
+  /* Search box: full-width row on its own */
+  .filterSearch {
+    width: 100%;
+  }
+
   .filterSearch input {
-    width: 140px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Severity + Status dropdowns share the second row */
+  .filter:not(.filterSearch) {
+    flex: 1 1 auto;
+  }
+
+  .filter:not(.filterSearch) select {
+    width: 100%;
+    box-sizing: border-box;
   }
 }
 
