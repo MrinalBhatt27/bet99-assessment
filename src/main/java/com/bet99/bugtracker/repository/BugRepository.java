@@ -14,4 +14,5 @@ public interface BugRepository {
     List<Bug> findBySeverity(Severity severity);
     List<Bug> findByStatus(BugStatus status);
     List<Bug> findBySeverityAndStatus(Severity severity, BugStatus status);
+    void deleteById(Long id);
 }

@@ -25,7 +25,7 @@
   <mvc:cors>
     <mvc:mapping path="/api/**"
                  allowed-origins="*"
-                 allowed-methods="GET,POST"
+                 allowed-methods="GET,POST,PATCH,DELETE"
                  allowed-headers="Content-Type,Accept"
                  max-age="3600"/>
   </mvc:cors>

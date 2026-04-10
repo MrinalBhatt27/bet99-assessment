@@ -98,6 +98,28 @@ button {
   margin-bottom: 4px;
 }
 
+.table .col-action {
+  white-space: nowrap;
+  text-align: center;
+  width: 36px;
+}
+
+.btnDelete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #6b7280;
+  line-height: 1;
+}
+
+.btnDelete:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 /* Compact inline select used inside table rows for status update */
 .statusSelect {
   width: auto;

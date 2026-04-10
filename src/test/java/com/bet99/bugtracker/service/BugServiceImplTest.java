@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -152,6 +153,29 @@ public class BugServiceImplTest {
 
         BugServiceImpl service = new BugServiceImpl(repo);
         service.updateStatus(99L, BugStatus.RESOLVED);
+    }
+
+    @Test
+    public void delete_existingBug_callsRepository() {
+        BugRepository repo = mock(BugRepository.class);
+        Bug bug = makeBug("Old bug", "To be deleted", Severity.LOW, BugStatus.OPEN);
+        when(repo.findById(1L)).thenReturn(Optional.of(bug));
+
+        BugServiceImpl service = new BugServiceImpl(repo);
+        service.delete(1L);
+
+        verify(repo).deleteById(1L);
+    }
+
+    @Test(expected = BugNotFoundException.class)
+    public void delete_nonExistentBug_throwsBugNotFoundException() {
+        BugRepository repo = mock(BugRepository.class);
+        when(repo.findById(99L)).thenReturn(Optional.<Bug>empty());
+
+        BugServiceImpl service = new BugServiceImpl(repo);
+        service.delete(99L);
+
+        verify(repo, never()).deleteById(99L);
     }
 
     // ---- helpers ----

@@ -49,7 +49,7 @@ function renderTable(items) {
   tbody.empty();
 
   if (!items || !items.length) {
-    tbody.append("<tr><td colspan='6' class='muted'>No bugs yet</td></tr>");
+    tbody.append("<tr><td colspan='7' class='muted'>No bugs yet</td></tr>");
     return;
   }
 
@@ -63,6 +63,7 @@ function renderTable(items) {
       + "<td class='col-meta'>" + buildStatusSelect(b.id, b.status) + "</td>"
       + "<td class='col-meta muted'>" + escapeHtml(formatDate(b.createdAt)) + "</td>"
       + "<td class='col-desc'>" + escapeHtml(b.description) + "</td>"
+      + "<td class='col-action'><button class='btnDelete' data-id='" + escapeHtml(String(b.id)) + "' title='Delete'>&#x1F5D1;</button></td>"
       + "</tr>";
     tbody.append(row);
   }
@@ -101,6 +102,24 @@ function updateBugStatus(id, newStatus) {
     if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
     setMessage(msg, true);
     loadBugs();
+  });
+}
+
+function deleteBug(id) {
+  if (!window.confirm("Delete bug #" + id + "?")) return;
+
+  $.ajax({
+    method: "DELETE",
+    url: apiUrl("/api/bugs/" + id)
+  })
+  .done(function () {
+    setMessage("Bug #" + id + " deleted.", false);
+    loadBugs();
+  })
+  .fail(function (xhr) {
+    var msg = "Delete failed (" + xhr.status + ")";
+    if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+    setMessage(msg, true);
   });
 }
 
@@ -162,11 +181,16 @@ $(function () {
     loadBugs();
   });
 
-  // Event delegation: status dropdowns are created dynamically per row
+  // Event delegation: status dropdowns and delete buttons are created dynamically per row
   $(document).on("change", ".statusSelect", function () {
     var id = $(this).data("id");
     var newStatus = $(this).val();
     updateBugStatus(id, newStatus);
+  });
+
+  $(document).on("click", ".btnDelete", function () {
+    var id = $(this).data("id");
+    deleteBug(id);
   });
 
   loadBugs();

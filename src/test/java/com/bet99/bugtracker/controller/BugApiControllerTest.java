@@ -22,7 +22,10 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -223,6 +226,25 @@ public class BugApiControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"BOGUS\"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ── DELETE /api/bugs/{id} ─────────────────────────────────────────────────
+
+    @Test
+    public void delete_existingBug_returns204() throws Exception {
+        doNothing().when(bugService).delete(1L);
+
+        mockMvc.perform(delete("/api/bugs/1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void delete_notFound_returns404() throws Exception {
+        doThrow(new BugNotFoundException(99L)).when(bugService).delete(99L);
+
+        mockMvc.perform(delete("/api/bugs/99"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

@@ -8,8 +8,10 @@ import com.bet99.bugtracker.model.Severity;
 import com.bet99.bugtracker.service.BugService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,6 +50,13 @@ public class BugApiController {
             @RequestParam(name = "status", required = false) BugStatus status) {
         log.debug("GET /api/bugs severity={} status={}", severity, status);
         return ResponseEntity.ok(bugService.list(Optional.ofNullable(severity), Optional.ofNullable(status)));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        log.info("DELETE /api/bugs/{}", id);
+        bugService.delete(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @PatchMapping("/{id}/status")

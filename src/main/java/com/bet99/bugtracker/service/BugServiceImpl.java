@@ -79,6 +79,17 @@ public class BugServiceImpl implements BugService {
         return toResponse(bug);
     }
 
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        if (!bugRepository.findById(id).isPresent()) {
+            log.warn("Bug not found for deletion: id={}", id);
+            throw new BugNotFoundException(id);
+        }
+        log.info("Deleting bug id={}", id);
+        bugRepository.deleteById(id);
+    }
+
     private BugResponse toResponse(Bug bug) {
         BugResponse response = new BugResponse();
         response.setId(bug.getId());

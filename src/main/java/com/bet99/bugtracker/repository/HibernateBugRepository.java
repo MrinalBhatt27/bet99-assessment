@@ -65,4 +65,12 @@ public class HibernateBugRepository implements BugRepository {
                 .setParameter("status", status)
                 .getResultList();
     }
+
+    @Override
+    public void deleteById(Long id) {
+        Bug bug = session().get(Bug.class, id);
+        if (bug != null) {
+            session().delete(bug);
+        }
+    }
 }

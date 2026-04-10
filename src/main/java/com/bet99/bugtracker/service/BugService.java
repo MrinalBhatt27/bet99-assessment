@@ -12,4 +12,5 @@ public interface BugService {
     BugResponse create(CreateBugRequest request);
     List<BugResponse> list(Optional<Severity> severity, Optional<BugStatus> status);
     BugResponse updateStatus(Long id, BugStatus status);
+    void delete(Long id);
 }

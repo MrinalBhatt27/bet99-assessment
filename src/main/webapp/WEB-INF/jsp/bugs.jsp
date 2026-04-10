@@ -90,6 +90,7 @@
             <th>Status</th>
             <th>Created</th>
             <th>Description</th>
+            <th></th>
           </tr>
           </thead>
           <tbody></tbody>
