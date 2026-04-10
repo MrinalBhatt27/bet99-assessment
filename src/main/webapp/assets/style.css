@@ -261,9 +261,9 @@ button {
     gap: 6px;
   }
 
-  /* Search box: full-width row on its own */
+  /* Row 1: Search (stretches) + Per page (compact) */
   .filterSearch {
-    width: 100%;
+    flex: 1 1 auto;
   }
 
   .filterSearch input {
@@ -271,12 +271,20 @@ button {
     box-sizing: border-box;
   }
 
-  /* Severity, Status, Per page dropdowns share the second row */
-  .filter:not(.filterSearch) {
+  .filterPerPage {
+    flex: 0 0 auto;
+  }
+
+  .filterPerPage select {
+    width: auto;
+  }
+
+  /* Row 2: Severity + Status share remaining space */
+  .filter:not(.filterSearch):not(.filterPerPage) {
     flex: 1 1 auto;
   }
 
-  .filter:not(.filterSearch) select {
+  .filter:not(.filterSearch):not(.filterPerPage) select {
     width: 100%;
     box-sizing: border-box;
   }
