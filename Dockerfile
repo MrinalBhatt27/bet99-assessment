@@ -5,7 +5,7 @@ WORKDIR /app
 # This layer is cached and only re-runs when pom.xml changes,
 # so subsequent builds (code-only changes) are fast.
 COPY pom.xml .
-RUN mvn dependency:resolve dependency:resolve-plugins --no-transfer-progress -q
+RUN mvn dependency:go-offline --no-transfer-progress
 
 # ── Copy source and expose port ────────────────────────────────────────────────
 COPY src ./src
