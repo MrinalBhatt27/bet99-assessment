@@ -32,6 +32,18 @@ function formatDate(iso) {
   }
 }
 
+var STATUS_OPTIONS = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"];
+
+function buildStatusSelect(id, currentStatus) {
+  var html = "<select class='statusSelect' data-id='" + escapeHtml(String(id)) + "'>";
+  for (var i = 0; i < STATUS_OPTIONS.length; i++) {
+    var s = STATUS_OPTIONS[i];
+    html += "<option value='" + s + "'" + (s === currentStatus ? " selected" : "") + ">" + s + "</option>";
+  }
+  html += "</select>";
+  return html;
+}
+
 function renderTable(items) {
   var tbody = $("#bugsTable tbody");
   tbody.empty();
@@ -48,7 +60,7 @@ function renderTable(items) {
       + "<td>" + escapeHtml(b.bugTitle) + "</td>"
       + "<td class='col-meta'><span class='pill sev-" + escapeHtml(String(b.severity).toLowerCase()) + "'>"
       + escapeHtml(b.severity) + "</span></td>"
-      + "<td class='col-meta'>" + escapeHtml(b.status) + "</td>"
+      + "<td class='col-meta'>" + buildStatusSelect(b.id, b.status) + "</td>"
       + "<td class='col-meta muted'>" + escapeHtml(formatDate(b.createdAt)) + "</td>"
       + "<td class='col-desc'>" + escapeHtml(b.description) + "</td>"
       + "</tr>";
@@ -58,8 +70,12 @@ function renderTable(items) {
 
 function loadBugs() {
   var sev = $("#severityFilter").val();
+  var st  = $("#statusFilter").val();
   var url = apiUrl("/api/bugs");
-  if (sev) url += "?severity=" + encodeURIComponent(sev);
+  var params = [];
+  if (sev) params.push("severity=" + encodeURIComponent(sev));
+  if (st)  params.push("status="   + encodeURIComponent(st));
+  if (params.length) url += "?" + params.join("&");
 
   $.getJSON(url)
     .done(function (data) {
@@ -68,6 +84,24 @@ function loadBugs() {
     .fail(function (xhr) {
       setMessage("Failed to load bugs (" + xhr.status + ")", true);
     });
+}
+
+function updateBugStatus(id, newStatus) {
+  $.ajax({
+    method: "PATCH",
+    url: apiUrl("/api/bugs/" + id + "/status"),
+    contentType: "application/json",
+    data: JSON.stringify({ status: newStatus })
+  })
+  .done(function () {
+    setMessage("Status updated.", false);
+  })
+  .fail(function (xhr) {
+    var msg = "Update failed (" + xhr.status + ")";
+    if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+    setMessage(msg, true);
+    loadBugs();
+  });
 }
 
 function submitBug() {
@@ -117,10 +151,23 @@ function submitBug() {
 
 $(function () {
   $("#submitBug").on("click", submitBug);
+
   $("#severityFilter").on("change", function () {
     setMessage("");
     loadBugs();
   });
+
+  $("#statusFilter").on("change", function () {
+    setMessage("");
+    loadBugs();
+  });
+
+  // Event delegation: status dropdowns are created dynamically per row
+  $(document).on("change", ".statusSelect", function () {
+    var id = $(this).data("id");
+    var newStatus = $(this).val();
+    updateBugStatus(id, newStatus);
+  });
+
   loadBugs();
 });
-

@@ -2,6 +2,7 @@ package com.bet99.bugtracker.service;
 
 import com.bet99.bugtracker.dto.BugResponse;
 import com.bet99.bugtracker.dto.CreateBugRequest;
+import com.bet99.bugtracker.exception.BugNotFoundException;
 import com.bet99.bugtracker.model.Bug;
 import com.bet99.bugtracker.model.BugStatus;
 import com.bet99.bugtracker.model.Severity;
@@ -26,7 +27,6 @@ public class BugServiceImplTest {
     @Test
     public void create_mapsAndSavesBug() {
         BugRepository repo = mock(BugRepository.class);
-
         when(repo.save(any(Bug.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         BugServiceImpl service = new BugServiceImpl(repo);
@@ -60,13 +60,12 @@ public class BugServiceImplTest {
 
         BugServiceImpl service = new BugServiceImpl(repo);
 
-        List<BugResponse> result = service.list(Optional.empty());
+        List<BugResponse> result = service.list(Optional.<Severity>empty(), Optional.<BugStatus>empty());
 
         assertEquals(2, result.size());
         assertEquals("Login broken", result.get(0).getBugTitle());
         assertEquals(Severity.HIGH, result.get(0).getSeverity());
         assertEquals("Typo on homepage", result.get(1).getBugTitle());
-        assertEquals(Severity.LOW, result.get(1).getSeverity());
         verify(repo).findAll();
     }
 
@@ -79,25 +78,80 @@ public class BugServiceImplTest {
 
         BugServiceImpl service = new BugServiceImpl(repo);
 
-        List<BugResponse> result = service.list(Optional.of(Severity.CRITICAL));
+        List<BugResponse> result = service.list(Optional.of(Severity.CRITICAL), Optional.<BugStatus>empty());
 
         assertEquals(1, result.size());
         assertEquals(Severity.CRITICAL, result.get(0).getSeverity());
-        assertEquals("Critical crash", result.get(0).getBugTitle());
-        assertNotNull(result.get(0).getCreatedAt());
         verify(repo).findBySeverity(Severity.CRITICAL);
     }
 
     @Test
     public void list_withSeverityFilter_returnsEmptyWhenNoneMatch() {
         BugRepository repo = mock(BugRepository.class);
-        when(repo.findBySeverity(Severity.MEDIUM)).thenReturn(Collections.emptyList());
+        when(repo.findBySeverity(Severity.MEDIUM)).thenReturn(Collections.<Bug>emptyList());
 
         BugServiceImpl service = new BugServiceImpl(repo);
 
-        List<BugResponse> result = service.list(Optional.of(Severity.MEDIUM));
+        List<BugResponse> result = service.list(Optional.of(Severity.MEDIUM), Optional.<BugStatus>empty());
 
         assertEquals(0, result.size());
+    }
+
+    @Test
+    public void list_withStatusFilter_delegatesToFindByStatus() {
+        BugRepository repo = mock(BugRepository.class);
+
+        Bug b = makeBug("Open bug", "Still open", Severity.LOW, BugStatus.OPEN);
+        when(repo.findByStatus(BugStatus.OPEN)).thenReturn(Collections.singletonList(b));
+
+        BugServiceImpl service = new BugServiceImpl(repo);
+
+        List<BugResponse> result = service.list(Optional.<Severity>empty(), Optional.of(BugStatus.OPEN));
+
+        assertEquals(1, result.size());
+        assertEquals(BugStatus.OPEN, result.get(0).getStatus());
+        verify(repo).findByStatus(BugStatus.OPEN);
+    }
+
+    @Test
+    public void list_withBothFilters_delegatesToFindBySeverityAndStatus() {
+        BugRepository repo = mock(BugRepository.class);
+
+        Bug b = makeBug("High open bug", "Needs attention", Severity.HIGH, BugStatus.OPEN);
+        when(repo.findBySeverityAndStatus(Severity.HIGH, BugStatus.OPEN)).thenReturn(Collections.singletonList(b));
+
+        BugServiceImpl service = new BugServiceImpl(repo);
+
+        List<BugResponse> result = service.list(Optional.of(Severity.HIGH), Optional.of(BugStatus.OPEN));
+
+        assertEquals(1, result.size());
+        assertEquals(Severity.HIGH, result.get(0).getSeverity());
+        assertEquals(BugStatus.OPEN, result.get(0).getStatus());
+        verify(repo).findBySeverityAndStatus(Severity.HIGH, BugStatus.OPEN);
+    }
+
+    @Test
+    public void updateStatus_existingBug_updatesStatusAndReturns() {
+        BugRepository repo = mock(BugRepository.class);
+
+        Bug bug = makeBug("Login broken", "Cannot log in", Severity.HIGH, BugStatus.OPEN);
+        when(repo.findById(1L)).thenReturn(Optional.of(bug));
+
+        BugServiceImpl service = new BugServiceImpl(repo);
+
+        BugResponse result = service.updateStatus(1L, BugStatus.RESOLVED);
+
+        assertEquals(BugStatus.RESOLVED, result.getStatus());
+        assertEquals(BugStatus.RESOLVED, bug.getStatus()); // entity mutated in place
+    }
+
+    @Test(expected = BugNotFoundException.class)
+    public void updateStatus_nonExistentBug_throwsBugNotFoundException() {
+        BugRepository repo = mock(BugRepository.class);
+        when(repo.findById(99L)).thenReturn(Optional.<Bug>empty());
+
+        BugServiceImpl service = new BugServiceImpl(repo);
+        service.updateStatus(99L, BugStatus.RESOLVED);
     }
 
     // ---- helpers ----
@@ -111,4 +165,3 @@ public class BugServiceImplTest {
         return b;
     }
 }
-

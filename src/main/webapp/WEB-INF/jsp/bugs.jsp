@@ -56,15 +56,27 @@
     <div class="panel">
       <div class="panelHeader">
         <h2>All bugs</h2>
-        <div class="filter">
-          <label>Filter severity</label>
-          <select id="severityFilter">
-            <option value="">ALL</option>
-            <option value="LOW">LOW</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HIGH">HIGH</option>
-            <option value="CRITICAL">CRITICAL</option>
-          </select>
+        <div class="filters">
+          <div class="filter">
+            <label>Severity</label>
+            <select id="severityFilter">
+              <option value="">ALL</option>
+              <option value="LOW">LOW</option>
+              <option value="MEDIUM">MEDIUM</option>
+              <option value="HIGH">HIGH</option>
+              <option value="CRITICAL">CRITICAL</option>
+            </select>
+          </div>
+          <div class="filter">
+            <label>Status</label>
+            <select id="statusFilter">
+              <option value="">ALL</option>
+              <option value="OPEN">OPEN</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="RESOLVED">RESOLVED</option>
+              <option value="CLOSED">CLOSED</option>
+            </select>
+          </div>
         </div>
       </div>
 
