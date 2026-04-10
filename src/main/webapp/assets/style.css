@@ -203,11 +203,6 @@ button {
     gap: 6px;
   }
 
-  .filters {
-    flex-direction: column;
-    gap: 6px;
-  }
-
   .filter select {
     width: auto;
   }
