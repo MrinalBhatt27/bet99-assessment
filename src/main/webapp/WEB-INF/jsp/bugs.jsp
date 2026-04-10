@@ -62,6 +62,15 @@
             <label>Search</label>
             <input type="text" id="searchBox" placeholder="Title or description…" autocomplete="off">
           </div>
+          <div class="filter filterPerPage">
+            <label>Per page</label>
+            <select id="pageSize">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
           <div class="filter">
             <label>Severity</label>
             <select id="severityFilter">
@@ -80,15 +89,6 @@
               <option value="IN_PROGRESS">IN_PROGRESS</option>
               <option value="RESOLVED">RESOLVED</option>
               <option value="CLOSED">CLOSED</option>
-            </select>
-          </div>
-          <div class="filter filterPerPage">
-            <label>Per page</label>
-            <select id="pageSize">
-              <option value="5">5</option>
-              <option value="10" selected>10</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
             </select>
           </div>
         </div>
