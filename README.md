@@ -9,20 +9,36 @@ Built with **Spring MVC 5**, **Hibernate 5**, **MySQL 8**, **JSP** and **jQuery*
 
 ## Quick start (Docker — recommended)
 
-The only thing you need installed is **Docker Desktop**.  
+The only things you need installed are **Docker** and **Docker Compose**.  
 Java, Maven and MySQL are all provided inside the containers.
 
+### Linux / Ubuntu — one-time Docker permission setup
+
+On Linux, Docker runs as root by default. Run this **once** so you can use Docker without `sudo`, then open a new terminal (or log out and back in):
+
 ```bash
-# 1. Clone the repo (if you haven't already)
+sudo usermod -aG docker $USER
+newgrp docker          # applies the group change in the current shell immediately
+```
+
+> If you prefer not to change your user groups, prefix every `docker` command below with `sudo`.
+
+### Start the app
+
+```bash
+# 1. Clone the repo
 git clone https://github.com/MrinalBhatt27/bet99-assessment.git
 cd bet99-assessment
 
-# 2. Create your local env file (defaults work out of the box)
+# 2. Create your local env file  ← REQUIRED, do not skip
 cp .env.example .env
 
-# 3. Build and start everything
+# 3. Build and start everything (first run downloads images and compiles — allow ~2 min)
 docker compose up
 ```
+
+> **`.env` is required.** Docker Compose reads database credentials from it.  
+> Running `docker compose up` without this file leaves all variables blank and MySQL will fail to start.
 
 Wait until you see:
 
@@ -56,12 +72,25 @@ Use this when you want fast iteration — edit code, Jetty reloads, no Docker re
 |------|---------|
 | Java | 8+ (Java 21 is fine) |
 | Maven | 3.8+ |
-| Docker Desktop | for MySQL only |
+| Docker | for MySQL only |
+
+**Install on Ubuntu:**
+```bash
+# Java 21
+sudo apt update && sudo apt install -y openjdk-21-jdk
+
+# Maven
+sudo apt install -y maven
+
+# Verify
+java -version
+mvn -version
+```
 
 ### Steps
 
 ```bash
-# 1. Start only the database
+# 1. Create env file and start only the database
 cp .env.example .env
 docker compose up -d mysql
 
