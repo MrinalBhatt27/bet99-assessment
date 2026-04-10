@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +35,16 @@ public class GlobalExceptionHandler {
     public Map<String, String> handleUnreadableMessage(HttpMessageNotReadableException ex) {
         Map<String, String> body = new HashMap<>();
         body.put("message", "Invalid request body: " + ex.getMessage());
+        return body;
+    }
+
+    /** Handles invalid enum values in @RequestParam (e.g. ?severity=BOGUS). */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("message", "Invalid value '" + ex.getValue() + "' for parameter '" + ex.getName() + "'");
         return body;
     }
 }
