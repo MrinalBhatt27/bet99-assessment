@@ -14,7 +14,7 @@
     <h1>Bug Tracker</h1>
 
     <div class="panel">
-      <h2>Log a bug</h2>
+      <h2 id="formTitle">Log a bug</h2>
 
       <div class="row">
         <label>Title</label>
@@ -49,6 +49,7 @@
 
       <div class="actions">
         <button id="submitBug" type="button">Submit</button>
+        <button id="cancelEdit" type="button" class="btnCancel" style="display:none">Cancel</button>
         <span id="formMessage" class="message"></span>
       </div>
     </div>
@@ -90,6 +91,7 @@
             <th>Status</th>
             <th>Created</th>
             <th>Description</th>
+            <th></th>
             <th></th>
           </tr>
           </thead>

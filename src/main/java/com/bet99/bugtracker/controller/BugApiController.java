@@ -2,6 +2,7 @@ package com.bet99.bugtracker.controller;
 
 import com.bet99.bugtracker.dto.BugResponse;
 import com.bet99.bugtracker.dto.CreateBugRequest;
+import com.bet99.bugtracker.dto.UpdateBugRequest;
 import com.bet99.bugtracker.dto.UpdateStatusRequest;
 import com.bet99.bugtracker.model.BugStatus;
 import com.bet99.bugtracker.model.Severity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -50,6 +52,14 @@ public class BugApiController {
             @RequestParam(name = "status", required = false) BugStatus status) {
         log.debug("GET /api/bugs severity={} status={}", severity, status);
         return ResponseEntity.ok(bugService.list(Optional.ofNullable(severity), Optional.ofNullable(status)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BugResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateBugRequest request) {
+        log.info("PUT /api/bugs/{} title='{}'", id, request.getBugTitle());
+        return ResponseEntity.ok(bugService.update(id, request));
     }
 
     @DeleteMapping("/{id}")

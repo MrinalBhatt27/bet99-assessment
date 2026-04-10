@@ -2,6 +2,7 @@ package com.bet99.bugtracker.controller;
 
 import com.bet99.bugtracker.dto.BugResponse;
 import com.bet99.bugtracker.dto.CreateBugRequest;
+import com.bet99.bugtracker.dto.UpdateBugRequest;
 import com.bet99.bugtracker.exception.BugNotFoundException;
 import com.bet99.bugtracker.model.BugStatus;
 import com.bet99.bugtracker.model.Severity;
@@ -29,6 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -226,6 +228,43 @@ public class BugApiControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"BOGUS\"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ── PUT /api/bugs/{id} ───────────────────────────────────────────────────
+
+    @Test
+    public void update_validRequest_returns200() throws Exception {
+        BugResponse updated = makeResponse(1L, "Updated title", Severity.CRITICAL, BugStatus.IN_PROGRESS);
+        when(bugService.update(eq(1L), any(UpdateBugRequest.class))).thenReturn(updated);
+
+        mockMvc.perform(put("/api/bugs/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validBugJson("Updated title", "Updated desc", "CRITICAL", "IN_PROGRESS")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bugTitle").value("Updated title"))
+                .andExpect(jsonPath("$.severity").value("CRITICAL"))
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
+    }
+
+    @Test
+    public void update_blankTitle_returns400() throws Exception {
+        mockMvc.perform(put("/api/bugs/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validBugJson("", "Some description", "LOW", "OPEN")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    public void update_bugNotFound_returns404() throws Exception {
+        when(bugService.update(eq(99L), any(UpdateBugRequest.class)))
+                .thenThrow(new BugNotFoundException(99L));
+
+        mockMvc.perform(put("/api/bugs/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validBugJson("Title", "Desc", "LOW", "OPEN")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     // ── DELETE /api/bugs/{id} ─────────────────────────────────────────────────

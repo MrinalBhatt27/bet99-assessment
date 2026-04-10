@@ -2,6 +2,7 @@ package com.bet99.bugtracker.service;
 
 import com.bet99.bugtracker.dto.BugResponse;
 import com.bet99.bugtracker.dto.CreateBugRequest;
+import com.bet99.bugtracker.dto.UpdateBugRequest;
 import com.bet99.bugtracker.exception.BugNotFoundException;
 import com.bet99.bugtracker.model.Bug;
 import com.bet99.bugtracker.model.BugStatus;
@@ -153,6 +154,39 @@ public class BugServiceImplTest {
 
         BugServiceImpl service = new BugServiceImpl(repo);
         service.updateStatus(99L, BugStatus.RESOLVED);
+    }
+
+    @Test
+    public void update_existingBug_updatesAllFieldsAndReturns() {
+        BugRepository repo = mock(BugRepository.class);
+        Bug bug = makeBug("Old title", "Old desc", Severity.LOW, BugStatus.OPEN);
+        when(repo.findById(1L)).thenReturn(Optional.of(bug));
+
+        UpdateBugRequest req = new UpdateBugRequest();
+        req.setBugTitle("New title");
+        req.setDescription("New desc");
+        req.setSeverity(Severity.CRITICAL);
+        req.setStatus(BugStatus.RESOLVED);
+
+        BugServiceImpl service = new BugServiceImpl(repo);
+        BugResponse result = service.update(1L, req);
+
+        assertEquals("New title", result.getBugTitle());
+        assertEquals("New desc", result.getDescription());
+        assertEquals(Severity.CRITICAL, result.getSeverity());
+        assertEquals(BugStatus.RESOLVED, result.getStatus());
+        // Verify entity was mutated
+        assertEquals("New title", bug.getBugTitle());
+        assertEquals(Severity.CRITICAL, bug.getSeverity());
+    }
+
+    @Test(expected = BugNotFoundException.class)
+    public void update_nonExistentBug_throwsBugNotFoundException() {
+        BugRepository repo = mock(BugRepository.class);
+        when(repo.findById(99L)).thenReturn(Optional.<Bug>empty());
+
+        BugServiceImpl service = new BugServiceImpl(repo);
+        service.update(99L, new UpdateBugRequest());
     }
 
     @Test

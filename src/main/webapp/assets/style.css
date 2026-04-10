@@ -104,7 +104,7 @@ button {
   width: 36px;
 }
 
-.btnDelete {
+.btnEdit, .btnDelete {
   background: none;
   border: none;
   cursor: pointer;
@@ -115,9 +115,24 @@ button {
   line-height: 1;
 }
 
+.btnEdit:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
 .btnDelete:hover {
   background: #fee2e2;
   color: #b91c1c;
+}
+
+.btnCancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btnCancel:hover {
+  background: #e5e7eb;
 }
 
 /* Compact inline select used inside table rows for status update */

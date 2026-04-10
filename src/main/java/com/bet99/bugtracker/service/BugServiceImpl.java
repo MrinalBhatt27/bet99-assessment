@@ -2,6 +2,7 @@ package com.bet99.bugtracker.service;
 
 import com.bet99.bugtracker.dto.BugResponse;
 import com.bet99.bugtracker.dto.CreateBugRequest;
+import com.bet99.bugtracker.dto.UpdateBugRequest;
 import com.bet99.bugtracker.exception.BugNotFoundException;
 import com.bet99.bugtracker.model.Bug;
 import com.bet99.bugtracker.model.BugStatus;
@@ -62,6 +63,24 @@ public class BugServiceImpl implements BugService {
         }
 
         return bugs.stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public BugResponse update(Long id, UpdateBugRequest request) {
+        Optional<Bug> found = bugRepository.findById(id);
+        if (!found.isPresent()) {
+            log.warn("Bug not found for update: id={}", id);
+            throw new BugNotFoundException(id);
+        }
+        Bug bug = found.get();
+        log.info("Updating bug id={}: title='{}', severity={}, status={}",
+                id, request.getBugTitle(), request.getSeverity(), request.getStatus());
+        bug.setBugTitle(request.getBugTitle());
+        bug.setDescription(request.getDescription());
+        bug.setSeverity(request.getSeverity());
+        bug.setStatus(request.getStatus());
+        return toResponse(bug);
     }
 
     @Override
