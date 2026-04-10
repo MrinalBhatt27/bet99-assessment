@@ -125,7 +125,7 @@ from the browser work without any extra configuration on the server side.
 
 ## REST API
 
-All endpoints are under `/api/bugs`.  
+All endpoints are under `/api/v1/bugs`.  
 Validation errors return `400 Bad Request` with `{"message": "..."}`.  
 Unknown IDs return `404 Not Found` with `{"message": "Bug not found: id=N"}`.
 
@@ -135,7 +135,7 @@ Valid `status` values: `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`
 ### Create a bug
 
 ```
-POST /api/bugs
+POST /api/v1/bugs
 Content-Type: application/json
 ```
 
@@ -153,10 +153,10 @@ Returns `200 OK` with the created bug.
 ### List / filter bugs
 
 ```
-GET /api/bugs                            ← all bugs
-GET /api/bugs?severity=HIGH              ← filter by severity
-GET /api/bugs?status=OPEN                ← filter by status
-GET /api/bugs?severity=HIGH&status=OPEN  ← combined server-side filter
+GET /api/v1/bugs                            ← all bugs
+GET /api/v1/bugs?severity=HIGH              ← filter by severity
+GET /api/v1/bugs?status=OPEN                ← filter by status
+GET /api/v1/bugs?severity=HIGH&status=OPEN  ← combined server-side filter
 
 # Search by title / description is applied client-side after the API response
 ```
@@ -166,7 +166,7 @@ Returns `200 OK` with a JSON array.
 ### Update all fields of a bug
 
 ```
-PUT /api/bugs/{id}
+PUT /api/v1/bugs/{id}
 Content-Type: application/json
 ```
 
@@ -184,7 +184,7 @@ Returns `200 OK` with the updated bug.
 ### Update status only
 
 ```
-PATCH /api/bugs/{id}/status
+PATCH /api/v1/bugs/{id}/status
 Content-Type: application/json
 ```
 
@@ -197,7 +197,7 @@ Returns `200 OK` with the updated bug.
 ### Delete a bug
 
 ```
-DELETE /api/bugs/{id}
+DELETE /api/v1/bugs/{id}
 ```
 
 Returns `204 No Content`.
@@ -231,11 +231,11 @@ The application uses the standard two-context Spring MVC setup:
 `bugs.jsp` is the only page. It contains the submit form and the bugs table.  
 All interaction is handled by `assets/app.js` using jQuery AJAX — no page reloads.
 
-- **Submit** — `POST /api/bugs`; on success the form clears and the table refreshes.
-- **Edit** — Clicking the ✏ button pre-fills the form; Submit calls `PUT /api/bugs/{id}`.
-- **Inline status** — The Status column is a live dropdown; changing it calls `PATCH /api/bugs/{id}/status`.
-- **Delete** — Clicking 🗑 shows a confirm dialog then calls `DELETE /api/bugs/{id}`.
-- **Filters** — Severity and Status dropdowns call `GET /api/bugs?severity=X&status=Y` and re-render the table.
+- **Submit** — `POST /api/v1/bugs`; on success the form clears and the table refreshes.
+- **Edit** — Clicking the ✏ button pre-fills the form; Submit calls `PUT /api/v1/bugs/{id}`.
+- **Inline status** — The Status column is a live dropdown; changing it calls `PATCH /api/v1/bugs/{id}/status`.
+- **Delete** — Clicking 🗑 shows a confirm dialog then calls `DELETE /api/v1/bugs/{id}`.
+- **Filters** — Severity and Status dropdowns call `GET /api/v1/bugs?severity=X&status=Y` and re-render the table.
 - **Search box** — The free-text search input filters the already-loaded rows client-side (debounced, 250 ms) against both `bugTitle` and `description`. It composes with the server-side filters: e.g. you can narrow to `severity=HIGH` via the dropdown and then search within those results.
 - `window.API_BASE_URL` is injected by `PageController` from the `api.baseUrl` property
   (set via the `API_BASE_URL` environment variable). Every AJAX call goes through `apiUrl()` so
@@ -251,6 +251,7 @@ CREATE TABLE bugs (
   severity    VARCHAR(32)  NOT NULL,
   status      VARCHAR(32)  NOT NULL,
   created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
 );
 ```
@@ -267,7 +268,9 @@ applied automatically on startup during development.
 ├── docker-compose.yml                  # Orchestrates MySQL + app containers
 ├── .dockerignore
 ├── .env.example                        # Copy to .env before first run
+├── .editorconfig                       # Consistent coding style across editors
 ├── pom.xml                             # Maven build, dependencies, Jetty plugin
+├── CHANGELOG.md                        # Full history of changes
 ├── .github/workflows/ci.yml            # GitHub Actions CI (build + test on Java 8 & 21)
 ├── docker/
 │   └── mysql/init/01_schema.sql        # DB init (runs once on first container start)
@@ -275,13 +278,15 @@ applied automatically on startup during development.
     ├── main/
     │   ├── java/com/bet99/bugtracker/
     │   │   ├── controller/             # BugApiController, PageController, GlobalExceptionHandler
+    │   │   ├── filter/                 # RequestLoggingFilter (MDC request-ID per request)
     │   │   ├── service/                # BugService interface + BugServiceImpl
     │   │   ├── repository/             # BugRepository interface + HibernateBugRepository
     │   │   ├── model/                  # Bug entity, Severity enum, BugStatus enum
     │   │   ├── dto/                    # CreateBugRequest, UpdateBugRequest, UpdateStatusRequest, BugResponse
     │   │   └── exception/              # BugNotFoundException
     │   ├── resources/
-    │   │   └── application.properties
+    │   │   ├── application.properties
+    │   │   └── logback.xml             # Logback config with MDC pattern
     │   └── webapp/
     │       ├── assets/                 # app.js, style.css
     │       └── WEB-INF/
@@ -290,7 +295,7 @@ applied automatically on startup during development.
     └── test/
         └── java/com/bet99/bugtracker/
             ├── controller/
-            │   └── BugApiControllerTest.java  # MockMvc tests for all endpoints
+            │   └── BugApiControllerTest.java  # 22 MockMvc tests for all endpoints
             └── service/
-                └── BugServiceImplTest.java    # Mockito unit tests for service layer
+                └── BugServiceImplTest.java    # 12 Mockito unit tests for service layer
 ```
