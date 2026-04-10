@@ -43,10 +43,20 @@ jobs:
           name: test-results-java-${{ matrix.java }}
           path: target/surefire-reports/
 
+      - name: Upload WAR artifact
+        if: matrix.java == '21'   # only upload once, from the canonical build
+        uses: actions/upload-artifact@v4
+        with:
+          name: bug-tracker-war
+          path: target/*.war
+
   # ── Verify the Docker image builds successfully ───────────────────────────────
+  # Runs only after all build-and-test matrix jobs pass, so a failing test
+  # prevents a broken image from being reported as the only failure.
   docker-build:
     name: Docker Build
     runs-on: ubuntu-latest
+    needs: build-and-test
 
     steps:
       - name: Checkout code
