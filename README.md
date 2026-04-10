@@ -125,7 +125,14 @@ from the browser work without any extra configuration on the server side.
 
 ## REST API
 
-### Submit a bug
+All endpoints are under `/api/bugs`.  
+Validation errors return `400 Bad Request` with `{"message": "..."}`.  
+Unknown IDs return `404 Not Found` with `{"message": "Bug not found: id=N"}`.
+
+Valid `severity` values: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`  
+Valid `status` values: `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`
+
+### Create a bug
 
 ```
 POST /api/bugs
@@ -141,23 +148,57 @@ Content-Type: application/json
 }
 ```
 
-Valid `severity` values: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`  
-Valid `status` values: `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`
+Returns `200 OK` with the created bug.
 
-Returns `200 OK` with the created bug as JSON, or `400 Bad Request` with
-`{"message": "..."}` if validation fails.
-
-### List all bugs
+### List / filter bugs
 
 ```
-GET /api/bugs
+GET /api/bugs                            ← all bugs
+GET /api/bugs?severity=HIGH              ← filter by severity
+GET /api/bugs?status=OPEN                ← filter by status
+GET /api/bugs?severity=HIGH&status=OPEN  ← combined filter
 ```
 
-### Filter by severity
+Returns `200 OK` with a JSON array.
+
+### Update all fields of a bug
 
 ```
-GET /api/bugs?severity=HIGH
+PUT /api/bugs/{id}
+Content-Type: application/json
 ```
+
+```json
+{
+  "bugTitle": "Updated title",
+  "description": "Updated description",
+  "severity": "CRITICAL",
+  "status": "IN_PROGRESS"
+}
+```
+
+Returns `200 OK` with the updated bug.
+
+### Update status only
+
+```
+PATCH /api/bugs/{id}/status
+Content-Type: application/json
+```
+
+```json
+{ "status": "RESOLVED" }
+```
+
+Returns `200 OK` with the updated bug.
+
+### Delete a bug
+
+```
+DELETE /api/bugs/{id}
+```
+
+Returns `204 No Content`.
 
 ---
 
@@ -188,11 +229,14 @@ The application uses the standard two-context Spring MVC setup:
 `bugs.jsp` is the only page. It contains the submit form and the bugs table.  
 All interaction is handled by `assets/app.js` using jQuery AJAX — no page reloads.
 
-- **Submit** — `POST /api/bugs` with JSON body; on success the form is cleared and the table refreshes.
-- **Filter** — Changing the severity dropdown calls `GET /api/bugs?severity=<value>` and re-renders the table.
-- `window.API_BASE_URL` is injected into the page by `PageController` from the `api.baseUrl` property
-  (set via the `API_BASE_URL` environment variable). Every AJAX call goes through `apiUrl()` which
-  prepends this base, so no URL is ever hardcoded to `localhost`.
+- **Submit** — `POST /api/bugs`; on success the form clears and the table refreshes.
+- **Edit** — Clicking the ✏ button pre-fills the form; Submit calls `PUT /api/bugs/{id}`.
+- **Inline status** — The Status column is a live dropdown; changing it calls `PATCH /api/bugs/{id}/status`.
+- **Delete** — Clicking 🗑 shows a confirm dialog then calls `DELETE /api/bugs/{id}`.
+- **Filters** — Severity and Status dropdowns call `GET /api/bugs?severity=X&status=Y` and re-render the table.
+- `window.API_BASE_URL` is injected by `PageController` from the `api.baseUrl` property
+  (set via the `API_BASE_URL` environment variable). Every AJAX call goes through `apiUrl()` so
+  no URL is ever hardcoded to `localhost`.
 
 ### Database schema
 
@@ -218,26 +262,32 @@ applied automatically on startup during development.
 ```
 ├── Dockerfile                          # Builds and runs the app in a container
 ├── docker-compose.yml                  # Orchestrates MySQL + app containers
+├── .dockerignore
 ├── .env.example                        # Copy to .env before first run
 ├── pom.xml                             # Maven build, dependencies, Jetty plugin
+├── .github/workflows/ci.yml            # GitHub Actions CI (build + test on Java 8 & 21)
 ├── docker/
 │   └── mysql/init/01_schema.sql        # DB init (runs once on first container start)
 └── src/
     ├── main/
     │   ├── java/com/bet99/bugtracker/
     │   │   ├── controller/             # BugApiController, PageController, GlobalExceptionHandler
-    │   │   ├── service/               # BugService interface + BugServiceImpl
-    │   │   ├── repository/            # BugRepository interface + HibernateBugRepository
-    │   │   ├── model/                 # Bug entity, Severity enum, BugStatus enum
-    │   │   └── dto/                   # CreateBugRequest, BugResponse
+    │   │   ├── service/                # BugService interface + BugServiceImpl
+    │   │   ├── repository/             # BugRepository interface + HibernateBugRepository
+    │   │   ├── model/                  # Bug entity, Severity enum, BugStatus enum
+    │   │   ├── dto/                    # CreateBugRequest, UpdateBugRequest, UpdateStatusRequest, BugResponse
+    │   │   └── exception/              # BugNotFoundException
     │   ├── resources/
     │   │   └── application.properties
     │   └── webapp/
-    │       ├── assets/                # app.js, style.css
+    │       ├── assets/                 # app.js, style.css
     │       └── WEB-INF/
     │           ├── jsp/bugs.jsp
-    │           └── spring/            # root-context.xml, servlet-context.xml
+    │           └── spring/             # root-context.xml, servlet-context.xml
     └── test/
-        └── java/com/bet99/bugtracker/service/
-            └── BugServiceImplTest.java
+        └── java/com/bet99/bugtracker/
+            ├── controller/
+            │   └── BugApiControllerTest.java  # MockMvc tests for all endpoints
+            └── service/
+                └── BugServiceImplTest.java    # Mockito unit tests for service layer
 ```
