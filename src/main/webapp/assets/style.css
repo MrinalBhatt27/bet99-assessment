@@ -161,6 +161,39 @@ button {
   -webkit-overflow-scrolling: touch;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 0 4px;
+}
+
+.btnPage {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.btnPage:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.btnPage:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pageInfo {
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
 .table {
   width: 100%;
   min-width: 560px;
@@ -238,7 +271,7 @@ button {
     box-sizing: border-box;
   }
 
-  /* Severity + Status dropdowns share the second row */
+  /* Severity, Status, Per page dropdowns share the second row */
   .filter:not(.filterSearch) {
     flex: 1 1 auto;
   }
@@ -246,6 +279,15 @@ button {
   .filter:not(.filterSearch) select {
     width: 100%;
     box-sizing: border-box;
+  }
+
+  .pagination {
+    gap: 8px;
+  }
+
+  .btnPage {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }
 

@@ -82,6 +82,15 @@
               <option value="CLOSED">CLOSED</option>
             </select>
           </div>
+          <div class="filter filterPerPage">
+            <label>Per page</label>
+            <select id="pageSize">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -101,6 +110,12 @@
           </thead>
           <tbody></tbody>
         </table>
+      </div>
+
+      <div id="pagination" class="pagination" style="display:none">
+        <button id="btnPrev" type="button" class="btnPage" disabled>&#8249; Prev</button>
+        <span id="pageInfo" class="pageInfo"></span>
+        <button id="btnNext" type="button" class="btnPage">Next &#8250;</button>
       </div>
     </div>
   </div>

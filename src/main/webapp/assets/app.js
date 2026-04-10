@@ -71,6 +71,11 @@ var bugsCache = {};
 
 var allBugs = [];
 
+// ── Pagination state ──────────────────────────────────────────────────────────
+
+var currentPage = 1;
+var pageSize    = 10;
+
 // ── Debounce helper ───────────────────────────────────────────────────────────
 
 function debounce(fn, delay) {
@@ -123,23 +128,45 @@ function renderTable(items) {
   }
 }
 
+// ── Pagination controls ───────────────────────────────────────────────────────
+
+function renderPagination(total) {
+  var pageCount = Math.max(1, Math.ceil(total / pageSize));
+  if (currentPage > pageCount) currentPage = pageCount;
+
+  var start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  var end   = Math.min(currentPage * pageSize, total);
+
+  $("#pageInfo").text(start + "–" + end + " of " + total);
+  $("#btnPrev").prop("disabled", currentPage <= 1);
+  $("#btnNext").prop("disabled", currentPage >= pageCount);
+  $("#pagination").toggle(total > 0);
+}
+
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 function filterAndRender() {
   var q = $.trim($("#searchBox").val()).toLowerCase();
-  if (!q) {
-    renderTable(allBugs);
-    return;
-  }
-  var filtered = [];
-  for (var i = 0; i < allBugs.length; i++) {
-    var b = allBugs[i];
-    if (b.bugTitle.toLowerCase().indexOf(q) !== -1 ||
-        b.description.toLowerCase().indexOf(q) !== -1) {
-      filtered.push(b);
+  var filtered = allBugs;
+
+  if (q) {
+    filtered = [];
+    for (var i = 0; i < allBugs.length; i++) {
+      var b = allBugs[i];
+      if (b.bugTitle.toLowerCase().indexOf(q) !== -1 ||
+          b.description.toLowerCase().indexOf(q) !== -1) {
+        filtered.push(b);
+      }
     }
   }
-  renderTable(filtered);
+
+  var total     = filtered.length;
+  var pageCount = Math.max(1, Math.ceil(total / pageSize));
+  if (currentPage > pageCount) currentPage = pageCount;
+
+  var start = (currentPage - 1) * pageSize;
+  renderTable(filtered.slice(start, start + pageSize));
+  renderPagination(total);
 }
 
 function loadBugs() {
@@ -262,9 +289,17 @@ $(function () {
 
   $("#cancelEdit").on("click", clearEditMode);
 
-  $("#severityFilter").on("change", function () { setMessage(""); loadBugs(); });
-  $("#statusFilter").on("change",   function () { setMessage(""); loadBugs(); });
-  $("#searchBox").on("input", debounce(function () { filterAndRender(); }, 250));
+  $("#severityFilter").on("change", function () { setMessage(""); currentPage = 1; loadBugs(); });
+  $("#statusFilter").on("change",   function () { setMessage(""); currentPage = 1; loadBugs(); });
+  $("#pageSize").on("change", function () {
+    pageSize = parseInt($(this).val(), 10);
+    currentPage = 1;
+    filterAndRender();
+  });
+  $("#searchBox").on("input", debounce(function () { currentPage = 1; filterAndRender(); }, 250));
+
+  $("#btnPrev").on("click", function () { if (currentPage > 1) { currentPage--; filterAndRender(); } });
+  $("#btnNext").on("click", function () { currentPage++; filterAndRender(); });
 
   // Inline status change (quick PATCH)
   $(document).on("change", ".statusSelect", function () {
