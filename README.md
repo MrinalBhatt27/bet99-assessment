@@ -30,12 +30,21 @@ newgrp docker          # applies the group change in the current shell immediate
 git clone https://github.com/MrinalBhatt27/bet99-assessment.git
 cd bet99-assessment
 
-# 2. Create your local env file  ← REQUIRED, do not skip
+# 2. Verify the env template is present (dotfiles are hidden by default — use ls -la)
+ls -la | grep .env
+# You should see:  .env.example
+
+# 3. Create your local env file  ← REQUIRED, do not skip
 cp .env.example .env
 
-# 3. Build and start everything (first run downloads images and compiles — allow ~2 min)
+# 4. Build and start everything (first run downloads images and compiles — allow ~2 min)
 docker compose up
 ```
+
+> **Why you might not see `.env.example` with plain `ls`**  
+> Files whose names start with `.` are hidden on Linux and macOS by default.  
+> Use `ls -la` (or `ls -a`) to list all files including hidden ones.  
+> The file is definitely in the repo — `ls -la | grep .env` will show it.
 
 > **`.env` is required.** Docker Compose reads database credentials from it.  
 > Running `docker compose up` without this file leaves all variables blank and MySQL will fail to start.
@@ -90,11 +99,13 @@ mvn -version
 ### Steps
 
 ```bash
-# 1. Create env file and start only the database
+# 1. Create env file (use ls -la to see dotfiles if .env.example looks missing)
 cp .env.example .env
+
+# 2. Start only the database
 docker compose up -d mysql
 
-# 2. Run the app locally
+# 3. Run the app locally
 mvn jetty:run
 ```
 
