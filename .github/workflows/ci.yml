@@ -7,18 +7,26 @@ on:
     branches: [ main ]
 
 jobs:
+
+  # ── Build & unit-test on every supported JDK ─────────────────────────────────
   build-and-test:
-    name: Build & Test
+    name: Build & Test (Java ${{ matrix.java }})
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false       # run both matrix entries even if one fails
+      matrix:
+        java: [ '11', '21' ] # 11 = true minimum (Mockito 5.x requires it)
+                             # 21 = what the Docker image uses
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
+      - name: Set up Java ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: ${{ matrix.java }}
           distribution: 'temurin'
           cache: 'maven'
 
@@ -28,9 +36,21 @@ jobs:
       - name: Run tests
         run: mvn test --no-transfer-progress
 
-      - name: Publish test report
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: test-results-java-${{ matrix.java }}
           path: target/surefire-reports/
+
+  # ── Verify the Docker image builds successfully ───────────────────────────────
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build . --tag bet99-app:ci --no-cache

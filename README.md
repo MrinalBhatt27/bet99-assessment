@@ -1,5 +1,7 @@
 # bet99 Bug Tracker
 
+[![CI](https://github.com/MrinalBhatt27/bet99-assessment/actions/workflows/ci.yml/badge.svg)](https://github.com/MrinalBhatt27/bet99-assessment/actions/workflows/ci.yml)
+
 A simple web application that lets users log and view bugs.  
 Built with **Spring MVC 5**, **Hibernate 5**, **MySQL 8**, **JSP** and **jQuery**.
 
