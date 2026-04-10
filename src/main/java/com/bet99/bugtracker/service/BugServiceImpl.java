@@ -116,7 +116,13 @@ public class BugServiceImpl implements BugService {
         response.setDescription(bug.getDescription());
         response.setSeverity(bug.getSeverity());
         response.setStatus(bug.getStatus());
-        response.setCreatedAt(DateTimeFormatter.ISO_INSTANT.format(bug.getCreatedAt()));
+        if (bug.getCreatedAt() != null) {
+            response.setCreatedAt(DateTimeFormatter.ISO_INSTANT.format(bug.getCreatedAt()));
+        }
+        if (bug.getUpdatedAt() != null) {
+            response.setUpdatedAt(DateTimeFormatter.ISO_INSTANT.format(bug.getUpdatedAt()));
+        }
+        response.setSelf("/api/v1/bugs/" + bug.getId());
         return response;
     }
 }

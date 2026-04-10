@@ -9,12 +9,6 @@ function apiUrl(path) {
   return base + path;
 }
 
-function setMessage(text, isError) {
-  var el = $("#formMessage");
-  el.text(text || "");
-  el.toggleClass("error", !!isError);
-}
-
 function escapeHtml(s) {
   return String(s)
     .replace(/&/g, "&amp;")
@@ -34,9 +28,42 @@ function formatDate(iso) {
   }
 }
 
+// ── Debounce helper ───────────────────────────────────────────────────────────
+
+function debounce(fn, delay) {
+  var timer;
+  return function () {
+    clearTimeout(timer);
+    timer = setTimeout(fn, delay);
+  };
+}
+
+// ── Toast notifications ───────────────────────────────────────────────────────
+
+function showToast(message, isError) {
+  var toast = $("<div class='toast" + (isError ? " toast-error" : " toast-success") + "'></div>")
+    .text(message);
+  $("#toastContainer").append(toast);
+  // Trigger reflow so the transition kicks in
+  toast[0].getBoundingClientRect();
+  toast.addClass("toast-visible");
+  setTimeout(function () {
+    toast.removeClass("toast-visible");
+    setTimeout(function () { toast.remove(); }, 350);
+  }, 3000);
+}
+
+// ── Inline form message (validation only) ────────────────────────────────────
+
+function setMessage(text, isError) {
+  var el = $("#formMessage");
+  el.text(text || "");
+  el.toggleClass("error", !!isError);
+}
+
 // ── Edit-mode state ───────────────────────────────────────────────────────────
 
-var editingId = null; // null = create mode, number = edit mode
+var editingId = null;
 
 function setEditMode(bug) {
   editingId = bug.id;
@@ -48,6 +75,7 @@ function setEditMode(bug) {
   $("#submitBug").text("Update");
   $("#cancelEdit").show();
   setMessage("");
+  updateTitleCount();
   $("html, body").animate({ scrollTop: 0 }, 250);
 }
 
@@ -61,13 +89,25 @@ function clearEditMode() {
   $("#submitBug").text("Submit");
   $("#cancelEdit").hide();
   setMessage("");
+  updateTitleCount();
 }
 
-// ── Bug cache (keyed by id, populated after each loadBugs) ───────────────────
+// ── Character counter for title ───────────────────────────────────────────────
+
+var TITLE_MAX = 255;
+
+function updateTitleCount() {
+  var len = $("#bugTitle").val().length;
+  var el  = $("#titleCount");
+  el.text(len + " / " + TITLE_MAX);
+  el.toggleClass("count-warn", len > TITLE_MAX * 0.9);
+}
+
+// ── Bug cache (keyed by id) ───────────────────────────────────────────────────
 
 var bugsCache = {};
 
-// ── All bugs as returned by the last API call (search filters this) ───────────
+// ── All bugs as returned by the last API call ─────────────────────────────────
 
 var allBugs = [];
 
@@ -76,14 +116,36 @@ var allBugs = [];
 var currentPage = 1;
 var pageSize    = 10;
 
-// ── Debounce helper ───────────────────────────────────────────────────────────
+// ── Sort state ────────────────────────────────────────────────────────────────
 
-function debounce(fn, delay) {
-  var timer;
-  return function () {
-    clearTimeout(timer);
-    timer = setTimeout(fn, delay);
-  };
+var sortCol = "id";
+var sortDir = "desc";
+
+var SEVERITY_ORDER = { LOW: 0, MEDIUM: 1, HIGH: 2, CRITICAL: 3 };
+
+function applySort(arr) {
+  var col = sortCol;
+  var dir = sortDir === "asc" ? 1 : -1;
+  return arr.slice().sort(function (a, b) {
+    var av = a[col];
+    var bv = b[col];
+    if (col === "severity") { av = SEVERITY_ORDER[av] || 0; bv = SEVERITY_ORDER[bv] || 0; }
+    if (av == null) return dir;
+    if (bv == null) return -dir;
+    if (typeof av === "string") av = av.toLowerCase();
+    if (typeof bv === "string") bv = bv.toLowerCase();
+    return av < bv ? -dir : av > bv ? dir : 0;
+  });
+}
+
+function updateSortHeaders() {
+  $("#bugsTable thead th[data-col]").each(function () {
+    var col = $(this).data("col");
+    $(this).find(".sort-icon").remove();
+    if (col === sortCol) {
+      $(this).append("<span class='sort-icon'>" + (sortDir === "asc" ? " ▲" : " ▼") + "</span>");
+    }
+  });
 }
 
 // ── Table rendering ───────────────────────────────────────────────────────────
@@ -106,7 +168,13 @@ function renderTable(items) {
   tbody.empty();
 
   if (!items || !items.length) {
-    tbody.append("<tr><td colspan='8' class='muted'>No bugs yet</td></tr>");
+    var q = $.trim($("#searchBox").val());
+    var msg = q
+      ? "No bugs match <em>" + escapeHtml(q) + "</em>"
+      : allBugs.length === 0
+        ? "<span class='empty-icon'>&#x1F41B;</span><br>No bugs logged yet — submit one above!"
+        : "No bugs match the current filters";
+    tbody.append("<tr><td colspan='8' class='emptyState'>" + msg + "</td></tr>");
     return;
   }
 
@@ -143,7 +211,7 @@ function renderPagination(total) {
   $("#pagination").toggle(total > 0);
 }
 
-// ── API calls ─────────────────────────────────────────────────────────────────
+// ── Filter + sort + paginate pipeline ────────────────────────────────────────
 
 function filterAndRender() {
   var q = $.trim($("#searchBox").val()).toLowerCase();
@@ -160,6 +228,8 @@ function filterAndRender() {
     }
   }
 
+  filtered = applySort(filtered);
+
   var total     = filtered.length;
   var pageCount = Math.max(1, Math.ceil(total / pageSize));
   if (currentPage > pageCount) currentPage = pageCount;
@@ -167,12 +237,15 @@ function filterAndRender() {
   var start = (currentPage - 1) * pageSize;
   renderTable(filtered.slice(start, start + pageSize));
   renderPagination(total);
+  updateSortHeaders();
 }
+
+// ── API calls ─────────────────────────────────────────────────────────────────
 
 function loadBugs() {
   var sev = $("#severityFilter").val();
   var st  = $("#statusFilter").val();
-  var url = apiUrl("/api/bugs");
+  var url = apiUrl("/api/v1/bugs");
   var params = [];
   if (sev) params.push("severity=" + encodeURIComponent(sev));
   if (st)  params.push("status="   + encodeURIComponent(st));
@@ -180,38 +253,40 @@ function loadBugs() {
 
   $.getJSON(url)
     .done(function (data) { allBugs = data || []; filterAndRender(); })
-    .fail(function (xhr) { setMessage("Failed to load bugs (" + xhr.status + ")", true); });
+    .fail(function (xhr) { showToast("Failed to load bugs (" + xhr.status + ")", true); });
 }
 
 function updateBugStatus(id, newStatus) {
   $.ajax({
     method: "PATCH",
-    url: apiUrl("/api/bugs/" + id + "/status"),
+    url: apiUrl("/api/v1/bugs/" + id + "/status"),
     contentType: "application/json",
     data: JSON.stringify({ status: newStatus })
   })
-  .done(function () { setMessage("Status updated.", false); })
+  .done(function () { showToast("Status updated.", false); })
   .fail(function (xhr) {
     var msg = "Update failed (" + xhr.status + ")";
     if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
-    setMessage(msg, true);
+    showToast(msg, true);
     loadBugs();
   });
 }
 
 function deleteBug(id) {
-  if (!window.confirm("Delete bug #" + id + "?")) return;
+  var bug   = bugsCache[id];
+  var label = bug ? "\u201c" + bug.bugTitle + "\u201d" : "#" + id;
+  if (!window.confirm("Delete " + label + "?\nThis cannot be undone.")) return;
 
-  $.ajax({ method: "DELETE", url: apiUrl("/api/bugs/" + id) })
+  $.ajax({ method: "DELETE", url: apiUrl("/api/v1/bugs/" + id) })
     .done(function () {
       if (editingId === id) clearEditMode();
-      setMessage("Bug #" + id + " deleted.", false);
+      showToast("Bug " + label + " deleted.", false);
       loadBugs();
     })
     .fail(function (xhr) {
       var msg = "Delete failed (" + xhr.status + ")";
       if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
-      setMessage(msg, true);
+      showToast(msg, true);
     });
 }
 
@@ -240,44 +315,39 @@ function submitBug() {
   };
 
   if (editingId !== null) {
-    // ── Update existing bug (PUT) ────────────────────────────────────────────
     $.ajax({
       method: "PUT",
-      url: apiUrl("/api/bugs/" + editingId),
+      url: apiUrl("/api/v1/bugs/" + editingId),
       contentType: "application/json",
       data: JSON.stringify(payload)
     })
     .done(function () {
       clearEditMode();
-      setMessage("Bug updated successfully.", false);
+      showToast("Bug updated successfully.", false);
       loadBugs();
     })
     .fail(function (xhr) {
       var msg = "Update failed (" + xhr.status + ")";
       if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
-      setMessage(msg, true);
+      showToast(msg, true);
     });
 
   } else {
-    // ── Create new bug (POST) ────────────────────────────────────────────────
     $.ajax({
       method: "POST",
-      url: apiUrl("/api/bugs"),
+      url: apiUrl("/api/v1/bugs"),
       contentType: "application/json",
       data: JSON.stringify(payload)
     })
     .done(function () {
-      $("#bugTitle").val("");
-      $("#description").val("");
-      $("#severity").val("MEDIUM");
-      $("#status").val("OPEN");
-      setMessage("Bug submitted successfully.", false);
+      clearEditMode();
+      showToast("Bug submitted successfully.", false);
       loadBugs();
     })
     .fail(function (xhr) {
       var msg = "Submit failed (" + xhr.status + ")";
       if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
-      setMessage(msg, true);
+      showToast(msg, true);
     });
   }
 }
@@ -285,12 +355,15 @@ function submitBug() {
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 
 $(function () {
-  $("#submitBug").on("click", submitBug);
+  updateTitleCount();
 
+  $("#submitBug").on("click", submitBug);
   $("#cancelEdit").on("click", clearEditMode);
 
-  $("#severityFilter").on("change", function () { setMessage(""); currentPage = 1; loadBugs(); });
-  $("#statusFilter").on("change",   function () { setMessage(""); currentPage = 1; loadBugs(); });
+  $("#bugTitle").on("input", updateTitleCount);
+
+  $("#severityFilter").on("change", function () { currentPage = 1; loadBugs(); });
+  $("#statusFilter").on("change",   function () { currentPage = 1; loadBugs(); });
   $("#pageSize").on("change", function () {
     pageSize = parseInt($(this).val(), 10);
     currentPage = 1;
@@ -301,12 +374,25 @@ $(function () {
   $("#btnPrev").on("click", function () { if (currentPage > 1) { currentPage--; filterAndRender(); } });
   $("#btnNext").on("click", function () { currentPage++; filterAndRender(); });
 
+  // Column sort
+  $(document).on("click", "#bugsTable thead th[data-col]", function () {
+    var col = $(this).data("col");
+    if (sortCol === col) {
+      sortDir = sortDir === "asc" ? "desc" : "asc";
+    } else {
+      sortCol = col;
+      sortDir = "asc";
+    }
+    currentPage = 1;
+    filterAndRender();
+  });
+
   // Inline status change (quick PATCH)
   $(document).on("change", ".statusSelect", function () {
     updateBugStatus($(this).data("id"), $(this).val());
   });
 
-  // Edit button → pre-fill the form at the top
+  // Edit button → pre-fill the form
   $(document).on("click", ".btnEdit", function () {
     var bug = bugsCache[$(this).data("id")];
     if (bug) setEditMode(bug);

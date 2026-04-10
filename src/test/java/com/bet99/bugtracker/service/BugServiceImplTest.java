@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -49,7 +48,7 @@ public class BugServiceImplTest {
         assertEquals("Home page link is broken", bug.getDescription());
         assertEquals(Severity.HIGH, bug.getSeverity());
         assertEquals(BugStatus.OPEN, bug.getStatus());
-        assertNotNull(bug.getCreatedAt());
+        // createdAt is set by @PrePersist (JPA lifecycle) – not testable without a container
     }
 
     @Test

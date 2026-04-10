@@ -59,14 +59,14 @@ public class BugApiControllerTest {
         mocks.close();
     }
 
-    // ── POST /api/bugs ────────────────────────────────────────────────────────
+    // ── POST /api/v1/bugs ─────────────────────────────────────────────────────
 
     @Test
     public void create_validRequest_returns200WithBody() throws Exception {
         when(bugService.create(any(CreateBugRequest.class)))
                 .thenReturn(makeResponse(1L, "Login broken", Severity.HIGH, BugStatus.OPEN));
 
-        mockMvc.perform(post("/api/bugs")
+        mockMvc.perform(post("/api/v1/bugs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validBugJson("Login broken", "Cannot log in", "HIGH", "OPEN")))
                 .andExpect(status().isOk())
@@ -77,7 +77,7 @@ public class BugApiControllerTest {
 
     @Test
     public void create_blankTitle_returns400() throws Exception {
-        mockMvc.perform(post("/api/bugs")
+        mockMvc.perform(post("/api/v1/bugs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validBugJson("   ", "Some description", "LOW", "OPEN")))
                 .andExpect(status().isBadRequest())
@@ -86,7 +86,7 @@ public class BugApiControllerTest {
 
     @Test
     public void create_blankDescription_returns400() throws Exception {
-        mockMvc.perform(post("/api/bugs")
+        mockMvc.perform(post("/api/v1/bugs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validBugJson("Valid title", "", "MEDIUM", "OPEN")))
                 .andExpect(status().isBadRequest())
@@ -96,7 +96,7 @@ public class BugApiControllerTest {
     @Test
     public void create_missingSeverity_returns400() throws Exception {
         String json = "{\"bugTitle\":\"No severity\",\"description\":\"Missing field\",\"status\":\"OPEN\"}";
-        mockMvc.perform(post("/api/bugs")
+        mockMvc.perform(post("/api/v1/bugs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
@@ -106,7 +106,7 @@ public class BugApiControllerTest {
     @Test
     public void create_titleTooLong_returns400() throws Exception {
         String longTitle = new String(new char[256]).replace('\0', 'A');
-        mockMvc.perform(post("/api/bugs")
+        mockMvc.perform(post("/api/v1/bugs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validBugJson(longTitle, "Some description", "LOW", "OPEN")))
                 .andExpect(status().isBadRequest())
@@ -115,13 +115,13 @@ public class BugApiControllerTest {
 
     @Test
     public void create_invalidJson_returns400() throws Exception {
-        mockMvc.perform(post("/api/bugs")
+        mockMvc.perform(post("/api/v1/bugs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("not-json"))
                 .andExpect(status().isBadRequest());
     }
 
-    // ── GET /api/bugs ─────────────────────────────────────────────────────────
+    // ── GET /api/v1/bugs ──────────────────────────────────────────────────────
 
     @Test
     public void list_noFilter_returnsAllBugs() throws Exception {
@@ -130,7 +130,7 @@ public class BugApiControllerTest {
                 makeResponse(2L, "Bug B", Severity.LOW, BugStatus.RESOLVED)
         ));
 
-        mockMvc.perform(get("/api/bugs"))
+        mockMvc.perform(get("/api/v1/bugs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].bugTitle").value("Bug A"))
@@ -141,7 +141,7 @@ public class BugApiControllerTest {
     public void list_noFilter_returnsEmptyArrayWhenNoBugs() throws Exception {
         when(bugService.list(Optional.empty(), Optional.empty())).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/api/bugs"))
+        mockMvc.perform(get("/api/v1/bugs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
@@ -152,7 +152,7 @@ public class BugApiControllerTest {
                 makeResponse(1L, "Critical bug", Severity.CRITICAL, BugStatus.OPEN)
         ));
 
-        mockMvc.perform(get("/api/bugs").param("severity", "CRITICAL"))
+        mockMvc.perform(get("/api/v1/bugs").param("severity", "CRITICAL"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].severity").value("CRITICAL"));
@@ -164,7 +164,7 @@ public class BugApiControllerTest {
                 makeResponse(1L, "Open bug", Severity.HIGH, BugStatus.OPEN)
         ));
 
-        mockMvc.perform(get("/api/bugs").param("status", "OPEN"))
+        mockMvc.perform(get("/api/v1/bugs").param("status", "OPEN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].status").value("OPEN"));
@@ -176,7 +176,7 @@ public class BugApiControllerTest {
                 makeResponse(1L, "High open bug", Severity.HIGH, BugStatus.OPEN)
         ));
 
-        mockMvc.perform(get("/api/bugs").param("severity", "HIGH").param("status", "OPEN"))
+        mockMvc.perform(get("/api/v1/bugs").param("severity", "HIGH").param("status", "OPEN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].severity").value("HIGH"))
@@ -185,26 +185,26 @@ public class BugApiControllerTest {
 
     @Test
     public void list_withInvalidSeverity_returns400WithMessage() throws Exception {
-        mockMvc.perform(get("/api/bugs").param("severity", "BOGUS"))
+        mockMvc.perform(get("/api/v1/bugs").param("severity", "BOGUS"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     public void list_withInvalidStatus_returns400WithMessage() throws Exception {
-        mockMvc.perform(get("/api/bugs").param("status", "UNKNOWN"))
+        mockMvc.perform(get("/api/v1/bugs").param("status", "UNKNOWN"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
     }
 
-    // ── PATCH /api/bugs/{id}/status ───────────────────────────────────────────
+    // ── PATCH /api/v1/bugs/{id}/status ────────────────────────────────────────
 
     @Test
     public void updateStatus_validRequest_returns200() throws Exception {
         BugResponse updated = makeResponse(1L, "Login broken", Severity.HIGH, BugStatus.RESOLVED);
         when(bugService.updateStatus(eq(1L), eq(BugStatus.RESOLVED))).thenReturn(updated);
 
-        mockMvc.perform(patch("/api/bugs/1/status")
+        mockMvc.perform(patch("/api/v1/bugs/1/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"RESOLVED\"}"))
                 .andExpect(status().isOk())
@@ -216,7 +216,7 @@ public class BugApiControllerTest {
         when(bugService.updateStatus(eq(99L), any(BugStatus.class)))
                 .thenThrow(new BugNotFoundException(99L));
 
-        mockMvc.perform(patch("/api/bugs/99/status")
+        mockMvc.perform(patch("/api/v1/bugs/99/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"RESOLVED\"}"))
                 .andExpect(status().isNotFound())
@@ -225,7 +225,7 @@ public class BugApiControllerTest {
 
     @Test
     public void updateStatus_missingStatus_returns400() throws Exception {
-        mockMvc.perform(patch("/api/bugs/1/status")
+        mockMvc.perform(patch("/api/v1/bugs/1/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -234,20 +234,20 @@ public class BugApiControllerTest {
 
     @Test
     public void updateStatus_invalidStatus_returns400() throws Exception {
-        mockMvc.perform(patch("/api/bugs/1/status")
+        mockMvc.perform(patch("/api/v1/bugs/1/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"BOGUS\"}"))
                 .andExpect(status().isBadRequest());
     }
 
-    // ── PUT /api/bugs/{id} ───────────────────────────────────────────────────
+    // ── PUT /api/v1/bugs/{id} ─────────────────────────────────────────────────
 
     @Test
     public void update_validRequest_returns200() throws Exception {
         BugResponse updated = makeResponse(1L, "Updated title", Severity.CRITICAL, BugStatus.IN_PROGRESS);
         when(bugService.update(eq(1L), any(UpdateBugRequest.class))).thenReturn(updated);
 
-        mockMvc.perform(put("/api/bugs/1")
+        mockMvc.perform(put("/api/v1/bugs/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validBugJson("Updated title", "Updated desc", "CRITICAL", "IN_PROGRESS")))
                 .andExpect(status().isOk())
@@ -258,7 +258,7 @@ public class BugApiControllerTest {
 
     @Test
     public void update_blankTitle_returns400() throws Exception {
-        mockMvc.perform(put("/api/bugs/1")
+        mockMvc.perform(put("/api/v1/bugs/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validBugJson("", "Some description", "LOW", "OPEN")))
                 .andExpect(status().isBadRequest())
@@ -270,20 +270,20 @@ public class BugApiControllerTest {
         when(bugService.update(eq(99L), any(UpdateBugRequest.class)))
                 .thenThrow(new BugNotFoundException(99L));
 
-        mockMvc.perform(put("/api/bugs/99")
+        mockMvc.perform(put("/api/v1/bugs/99")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validBugJson("Title", "Desc", "LOW", "OPEN")))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists());
     }
 
-    // ── DELETE /api/bugs/{id} ─────────────────────────────────────────────────
+    // ── DELETE /api/v1/bugs/{id} ──────────────────────────────────────────────
 
     @Test
     public void delete_existingBug_returns204() throws Exception {
         doNothing().when(bugService).delete(1L);
 
-        mockMvc.perform(delete("/api/bugs/1"))
+        mockMvc.perform(delete("/api/v1/bugs/1"))
                 .andExpect(status().isNoContent());
     }
 
@@ -291,7 +291,7 @@ public class BugApiControllerTest {
     public void delete_notFound_returns404() throws Exception {
         doThrow(new BugNotFoundException(99L)).when(bugService).delete(99L);
 
-        mockMvc.perform(delete("/api/bugs/99"))
+        mockMvc.perform(delete("/api/v1/bugs/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists());
     }

@@ -65,4 +65,15 @@ public class GlobalExceptionHandler {
         body.put("message", "Invalid value '" + ex.getValue() + "' for parameter '" + ex.getName() + "'");
         return body;
     }
+
+    /** Catch-all — never expose stack traces to the client. */
+    @ExceptionHandler(Exception.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Map<String, String> handleUnexpected(Exception ex) {
+        log.error("Unexpected error: {}", ex.getMessage(), ex);
+        Map<String, String> body = new HashMap<>();
+        body.put("message", "An unexpected error occurred. Please try again later.");
+        return body;
+    }
 }

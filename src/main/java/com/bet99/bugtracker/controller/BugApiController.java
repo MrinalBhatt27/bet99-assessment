@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/bugs")
+@RequestMapping("/api/v1/bugs")
 @Validated
 public class BugApiController {
 
@@ -42,7 +42,7 @@ public class BugApiController {
 
     @PostMapping
     public ResponseEntity<BugResponse> create(@Valid @RequestBody CreateBugRequest request) {
-        log.info("POST /api/bugs title='{}'", request.getBugTitle());
+        log.info("POST /api/v1/bugs title='{}'", request.getBugTitle());
         return ResponseEntity.ok(bugService.create(request));
     }
 
@@ -50,7 +50,7 @@ public class BugApiController {
     public ResponseEntity<List<BugResponse>> list(
             @RequestParam(name = "severity", required = false) Severity severity,
             @RequestParam(name = "status", required = false) BugStatus status) {
-        log.debug("GET /api/bugs severity={} status={}", severity, status);
+        log.debug("GET /api/v1/bugs severity={} status={}", severity, status);
         return ResponseEntity.ok(bugService.list(Optional.ofNullable(severity), Optional.ofNullable(status)));
     }
 
@@ -58,13 +58,13 @@ public class BugApiController {
     public ResponseEntity<BugResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody UpdateBugRequest request) {
-        log.info("PUT /api/bugs/{} title='{}'", id, request.getBugTitle());
+        log.info("PUT /api/v1/bugs/{} title='{}'", id, request.getBugTitle());
         return ResponseEntity.ok(bugService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        log.info("DELETE /api/bugs/{}", id);
+        log.info("DELETE /api/v1/bugs/{}", id);
         bugService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
@@ -73,7 +73,7 @@ public class BugApiController {
     public ResponseEntity<BugResponse> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody UpdateStatusRequest request) {
-        log.info("PATCH /api/bugs/{}/status -> {}", id, request.getStatus());
+        log.info("PATCH /api/v1/bugs/{}/status -> {}", id, request.getStatus());
         return ResponseEntity.ok(bugService.updateStatus(id, request.getStatus()));
     }
 }

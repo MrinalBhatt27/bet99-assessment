@@ -11,53 +11,30 @@ public class BugResponse {
     private Severity severity;
     private BugStatus status;
     private String createdAt;
+    private String updatedAt;
+    private String self;
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getBugTitle() { return bugTitle; }
+    public void setBugTitle(String bugTitle) { this.bugTitle = bugTitle; }
 
-    public String getBugTitle() {
-        return bugTitle;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setBugTitle(String bugTitle) {
-        this.bugTitle = bugTitle;
-    }
+    public Severity getSeverity() { return severity; }
+    public void setSeverity(Severity severity) { this.severity = severity; }
 
-    public String getDescription() {
-        return description;
-    }
+    public BugStatus getStatus() { return status; }
+    public void setStatus(BugStatus status) { this.status = status; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
-    public Severity getSeverity() {
-        return severity;
-    }
+    public String getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 
-    public void setSeverity(Severity severity) {
-        this.severity = severity;
-    }
-
-    public BugStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(BugStatus status) {
-        this.status = status;
-    }
-
-    public String getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(String createdAt) {
-        this.createdAt = createdAt;
-    }
+    public String getSelf() { return self; }
+    public void setSelf(String self) { this.self = self; }
 }
-

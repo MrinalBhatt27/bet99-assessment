@@ -10,6 +10,7 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
+  <div id="toastContainer"></div>
   <div class="container">
     <h1>Bug Tracker</h1>
 
@@ -17,7 +18,7 @@
       <h2 id="formTitle">Log a bug</h2>
 
       <div class="row">
-        <label>Title</label>
+        <label>Title <span id="titleCount" class="charCount">0 / 255</span></label>
         <input id="bugTitle" type="text" maxlength="255" placeholder="Short title">
       </div>
 
@@ -98,11 +99,11 @@
         <table class="table" id="bugsTable">
           <thead>
           <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Severity</th>
-            <th>Status</th>
-            <th>Created</th>
+            <th data-col="id" class="sortable">ID</th>
+            <th data-col="bugTitle" class="sortable">Title</th>
+            <th data-col="severity" class="sortable">Severity</th>
+            <th data-col="status" class="sortable">Status</th>
+            <th data-col="createdAt" class="sortable">Created</th>
             <th>Description</th>
             <th></th>
             <th></th>

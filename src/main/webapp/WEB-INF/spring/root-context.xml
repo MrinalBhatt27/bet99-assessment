@@ -21,11 +21,15 @@
     <property name="ignoreUnresolvablePlaceholders" value="true" />
   </bean>
 
-  <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+  <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
     <property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
-    <property name="url" value="${db.url}" />
-    <property name="username" value="${db.username}" />
-    <property name="password" value="${db.password}" />
+    <property name="jdbcUrl"         value="${db.url}" />
+    <property name="username"        value="${db.username}" />
+    <property name="password"        value="${db.password}" />
+    <property name="maximumPoolSize" value="10" />
+    <property name="minimumIdle"     value="2" />
+    <property name="connectionTimeout" value="30000" />
+    <property name="idleTimeout"     value="600000" />
   </bean>
 
   <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
