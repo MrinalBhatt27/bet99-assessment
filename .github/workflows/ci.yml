@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false       # run both matrix entries even if one fails
       matrix:
-        java: [ '11', '21' ] # 11 = true minimum (Mockito 5.x requires it)
+        java: [ '8', '21' ]  # 8  = stated minimum requirement
                              # 21 = what the Docker image uses
 
     steps:
