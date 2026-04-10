@@ -104,6 +104,16 @@ public class BugApiControllerTest {
     }
 
     @Test
+    public void create_titleTooLong_returns400() throws Exception {
+        String longTitle = new String(new char[256]).replace('\0', 'A');
+        mockMvc.perform(post("/api/bugs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validBugJson(longTitle, "Some description", "LOW", "OPEN")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
     public void create_invalidJson_returns400() throws Exception {
         mockMvc.perform(post("/api/bugs")
                         .contentType(MediaType.APPLICATION_JSON)

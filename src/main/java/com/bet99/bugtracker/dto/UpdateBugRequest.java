@@ -5,10 +5,12 @@ import com.bet99.bugtracker.model.Severity;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 public class UpdateBugRequest {
 
     @NotBlank
+    @Size(max = 255, message = "bugTitle must be 255 characters or fewer")
     private String bugTitle;
 
     @NotBlank
