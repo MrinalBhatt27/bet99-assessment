@@ -58,6 +58,10 @@
       <div class="panelHeader">
         <h2>All bugs</h2>
         <div class="filters">
+          <div class="filter filterSearch">
+            <label>Search</label>
+            <input type="text" id="searchBox" placeholder="Title or description…" autocomplete="off">
+          </div>
           <div class="filter">
             <label>Severity</label>
             <select id="severityFilter">

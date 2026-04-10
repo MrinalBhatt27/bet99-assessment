@@ -156,7 +156,9 @@ Returns `200 OK` with the created bug.
 GET /api/bugs                            ← all bugs
 GET /api/bugs?severity=HIGH              ← filter by severity
 GET /api/bugs?status=OPEN                ← filter by status
-GET /api/bugs?severity=HIGH&status=OPEN  ← combined filter
+GET /api/bugs?severity=HIGH&status=OPEN  ← combined server-side filter
+
+# Search by title / description is applied client-side after the API response
 ```
 
 Returns `200 OK` with a JSON array.
@@ -234,6 +236,7 @@ All interaction is handled by `assets/app.js` using jQuery AJAX — no page relo
 - **Inline status** — The Status column is a live dropdown; changing it calls `PATCH /api/bugs/{id}/status`.
 - **Delete** — Clicking 🗑 shows a confirm dialog then calls `DELETE /api/bugs/{id}`.
 - **Filters** — Severity and Status dropdowns call `GET /api/bugs?severity=X&status=Y` and re-render the table.
+- **Search box** — The free-text search input filters the already-loaded rows client-side (debounced, 250 ms) against both `bugTitle` and `description`. It composes with the server-side filters: e.g. you can narrow to `severity=HIGH` via the dropdown and then search within those results.
 - `window.API_BASE_URL` is injected by `PageController` from the `api.baseUrl` property
   (set via the `API_BASE_URL` environment variable). Every AJAX call goes through `apiUrl()` so
   no URL is ever hardcoded to `localhost`.

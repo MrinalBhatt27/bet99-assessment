@@ -98,6 +98,16 @@ button {
   margin-bottom: 4px;
 }
 
+.filterSearch input {
+  width: 180px;
+  padding: 8px 10px;
+}
+
+.filter select {
+  width: auto;
+  padding: 8px 10px;
+}
+
 .table .col-action {
   white-space: nowrap;
   text-align: center;
@@ -218,8 +228,8 @@ button {
     gap: 6px;
   }
 
-  .filter select {
-    width: auto;
+  .filterSearch input {
+    width: 140px;
   }
 }
 

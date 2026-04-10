@@ -67,6 +67,20 @@ function clearEditMode() {
 
 var bugsCache = {};
 
+// ── All bugs as returned by the last API call (search filters this) ───────────
+
+var allBugs = [];
+
+// ── Debounce helper ───────────────────────────────────────────────────────────
+
+function debounce(fn, delay) {
+  var timer;
+  return function () {
+    clearTimeout(timer);
+    timer = setTimeout(fn, delay);
+  };
+}
+
 // ── Table rendering ───────────────────────────────────────────────────────────
 
 var STATUS_OPTIONS = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"];
@@ -111,6 +125,23 @@ function renderTable(items) {
 
 // ── API calls ─────────────────────────────────────────────────────────────────
 
+function filterAndRender() {
+  var q = $.trim($("#searchBox").val()).toLowerCase();
+  if (!q) {
+    renderTable(allBugs);
+    return;
+  }
+  var filtered = [];
+  for (var i = 0; i < allBugs.length; i++) {
+    var b = allBugs[i];
+    if (b.bugTitle.toLowerCase().indexOf(q) !== -1 ||
+        b.description.toLowerCase().indexOf(q) !== -1) {
+      filtered.push(b);
+    }
+  }
+  renderTable(filtered);
+}
+
 function loadBugs() {
   var sev = $("#severityFilter").val();
   var st  = $("#statusFilter").val();
@@ -121,7 +152,7 @@ function loadBugs() {
   if (params.length) url += "?" + params.join("&");
 
   $.getJSON(url)
-    .done(function (data) { renderTable(data); })
+    .done(function (data) { allBugs = data || []; filterAndRender(); })
     .fail(function (xhr) { setMessage("Failed to load bugs (" + xhr.status + ")", true); });
 }
 
@@ -233,6 +264,7 @@ $(function () {
 
   $("#severityFilter").on("change", function () { setMessage(""); loadBugs(); });
   $("#statusFilter").on("change",   function () { setMessage(""); loadBugs(); });
+  $("#searchBox").on("input", debounce(function () { filterAndRender(); }, 250));
 
   // Inline status change (quick PATCH)
   $(document).on("change", ".statusSelect", function () {
